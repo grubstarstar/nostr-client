@@ -8,7 +8,7 @@ export function TextNotes() {
   const [events, setEvents] = useState<ServerMessage[]>([]);
 
   useNostrClient({
-    url: "wss://sg.qemura.xyz",
+    url: "wss://nostr.mikedilger.com",
     onMessage(message) {
       if (isTextNoteEvent(message)) {
         setEvents((events) => [...events, message]);
