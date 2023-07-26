@@ -66,6 +66,18 @@ ol.events li:nth-child(odd) { background: rgba(255, 255, 255, 0.2); }
   word-break: break-all;
 }
 
+.replies div {
+  background-color: orange;
+  border: solid 1px black;
+}
+
+.replies div.sub-reply {
+  padding: 8px;
+  background-color: green;
+  border: solid 1px red;
+}
+
+
 
 .user {
   background-color: red;
