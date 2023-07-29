@@ -17,7 +17,7 @@ export function TextNotes() {
   return (
     <ol className="events">
       {sortedRootTextNotes.map((textNote) => (
-        <li>
+        <li key={textNote.id}>
           <div className="event">
             <div className="event-time">
               {format(
@@ -28,8 +28,8 @@ export function TextNotes() {
             <div className="event-content">{textNote.id}</div>
             <div className="event-content">{textNote.content}</div>
             <div className="event-tags">
-              {textNote.tags.map((tag) => (
-                <div>
+              {textNote.tags.map((tag, idx) => (
+                <div key={`${tag.join("-")}-${idx}}`}>
                   <div>{JSON.stringify(tag)}</div>
                 </div>
               ))}
@@ -98,7 +98,7 @@ const Replies = ({ parentEventId, parentMarker = "root" }: RepliesProps) => {
   return (
     <div className="replies">
       {sortedReplies.map((reply) => (
-        <div>
+        <div key={reply.id}>
           <div>{reply.content}</div>
           <div className="sub-reply">
             <Replies parentEventId={reply.id} parentMarker="reply" />
