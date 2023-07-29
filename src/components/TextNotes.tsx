@@ -3,7 +3,7 @@ import { pickBy } from "lodash";
 import { useNostrClientContext } from "../contexts/nostrClientContext";
 
 export function TextNotes() {
-  const { textNotes } = useNostrClientContext();
+  const { textNotes, users } = useNostrClientContext();
 
   const rootTextNotes = pickBy(
     textNotes,
@@ -24,6 +24,11 @@ export function TextNotes() {
                 new Date(textNote.created_at * 1000),
                 "h:mm aaa do MMM yyyy"
               )}
+            </div>
+            <div className="event-content">
+              {users[textNote.pubkey]?.name ||
+                users[textNote.pubkey]?.name ||
+                "noname?"}
             </div>
             <div className="event-content">{textNote.id}</div>
             <div className="event-content">{textNote.content}</div>

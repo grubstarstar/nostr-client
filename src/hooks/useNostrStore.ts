@@ -18,7 +18,7 @@ interface UserMetadata {
   updatedAt: number;
 }
 
-interface TextNoteEvent extends Event {}
+export interface TextNoteEvent extends Event {}
 
 export interface NostrStore {
   me?: {
@@ -49,32 +49,34 @@ export const useNostrStore = createNostrStore((set) => ({
     pubkey,
   },
   relays: [
-    "wss://relay.beta.fogtype.com",
-    "wss://nostr.yuv.al",
-    "wss://nostr-relay.nokotaro.com",
-    "wss://nostr.mikedilger.com",
-    "wss://nostr.terminus.money",
-    "wss://freespeech.casa",
-    "wss://xmr.usenostr.org",
+    // "wss://relay.beta.fogtype.com",
+    // "wss://nostr.yuv.al",
+    // "wss://nostr-relay.nokotaro.com",
+    // "wss://nostr.mikedilger.com",
+    // "wss://nostr.terminus.money",
+    // "wss://freespeech.casa",
+    // "wss://xmr.usenostr.org",
     "wss://relayable.org",
-    "wss://relay.damus.io",
-    "wss://nostr.kollider.xyz",
-    "wss://relay.snort.social",
-    "wss://nostr.zebedee.cloud",
-    "wss://student.chadpolytechnic.com",
-    "wss://nostr.fmt.wiz.biz",
-    "wss://nostr-pub.wellorder.net",
-    "wss://nostr.onsats.org",
-    "wss://nostr.semisol.dev",
+    // "wss://relay.damus.io",
+    // "wss://nostr.kollider.xyz",
+    // "wss://relay.snort.social",
+    // "wss://nostr.zebedee.cloud",
+    // "wss://student.chadpolytechnic.com",
+    // "wss://nostr.fmt.wiz.biz",
+    // "wss://nostr-pub.wellorder.net",
+    // "wss://nostr.onsats.org", // fail to connect
+    // "wss://nostr.semisol.dev", // fail to connect
   ],
   following: [
-    "83e818dfbeccea56b0f551576b3fd39a7a50e1d8159343500368fa085ccd964b",
-    "npub1sg6plzptd64u62a878hep2kev88swjh3tw00gjsfl8f237lmu63q0uf63m", // Jack Dorsey
-    "7d7543186225119c7d5931f3de56a659ee22240a67572fab93edb607890fc149",
-    "2cad5a4855a23027276a510a2d14d7ee4d19b915f3447a89cf2e8dfd0b4aeeec",
-    "npub1a2cww4kn9wqte4ry70vyfwqyqvpswksna27rtxd8vty6c74era8sdcw83a", // Lyn Alden
-    "npub1s5yq6wadwrxde4lhfs56gn64hwzuhnfa6r9mj476r5s4hkunzgzqrs6q7z", // Preston Pysh
-    "npub1pyp9fqq60689ppds9ec3vghsm7s6s4grfya0y342g2hs3a0y6t0segc0qq", // Dylan Eclair
+    // "npub1l5rlwjn9gnxvu5x8g0xv90jufq60l0y50srfzkty8ywx84xxe8wsymzaae", // Me. (npub)
+    "fd07f74a6544ccce50c743ccc2be5c4834ffbc947c06915964391c63d4c6c9dd", // Me.
+    // "npub1sg6plzptd64u62a878hep2kev88swjh3tw00gjsfl8f237lmu63q0uf63m", // Jack Dorsey (npub)
+    "82341f882b6eabcd2ba7f1ef90aad961cf074af15b9ef44a09f9d2a8fbfbe6a2", // Jack Dorsey
+    "eab0e756d32b80bcd464f3d844b8040303075a13eabc3599a762c9ac7ab91f4f", // Lyn Alden
+    // "npub1s5yq6wadwrxde4lhfs56gn64hwzuhnfa6r9mj476r5s4hkunzgzqrs6q7z", // Preston Pysh (npub)
+    "85080d3bad70ccdcd7f74c29a44f55bb85cbcd3dd0cbb957da1d215bdb931204", // Preston Pysh
+    "090254801a7e8e5085b02e711622f0dfa1a85503493af246aa42af08f5e4d2df", // Dylan Eclair
+    "c4eabae1be3cf657bc1855ee05e69de9f059cb7a059227168b80b89761cbc4e0", // Jack Mallers
   ],
   users: {},
   textNotes: {},
@@ -121,25 +123,21 @@ export const useNostrStore = createNostrStore((set) => ({
   },
   addRelay(url: string) {
     set((state) => ({
-      ...state,
       relays: uniq([...state.relays, url]),
     }));
   },
   removeRelay(url: string) {
     set((state) => ({
-      ...state,
       relays: state.relays.filter((relay) => relay !== url),
     }));
   },
   follow(pubkey: string) {
     set((state) => ({
-      ...state,
       following: uniq([...state.following, pubkey]),
     }));
   },
   unfollow(pubkey: string) {
     set((state) => ({
-      ...state,
       following: state.following.filter(
         (followingPubkey) => followingPubkey !== pubkey
       ),

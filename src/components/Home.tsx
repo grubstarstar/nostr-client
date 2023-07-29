@@ -8,9 +8,9 @@ export function Home() {
   const followingUsers = following
     .map((pubkey) => users[pubkey] || pubkey)
     .filter((v) => !!v);
-  console.log("users", users);
-  console.log("following", following);
-  console.log("followingUsers", followingUsers);
+  // console.log("users", users);
+  // console.log("following", following);
+  // console.log("followingUsers", followingUsers);
   return (
     <div>
       <div>

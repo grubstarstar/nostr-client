@@ -5,9 +5,11 @@ import {
   finishEvent,
   getPublicKey,
 } from "nostr-tools";
-import { difference, pick } from "lodash";
+import { difference, differenceBy, filter, keyBy, pick } from "lodash";
 import { useCallback, useEffect, useRef } from "react";
 import { NostrStore, useNostrStore } from "./useNostrStore";
+import { getReplyAndMentionIdsFromTextNotes } from "../utils";
+import { shallow } from "zustand/shallow";
 
 export type NostrClient = Omit<NostrStore, "onMessage"> & {
   sendEvent: <K extends Kind>(
@@ -29,7 +31,24 @@ export function useNostrClient(): NostrClient {
     follow,
     unfollow,
     onMessage,
-  } = useNostrStore();
+  } = useNostrStore((state) => state, shallow);
+
+  const replyAndMentionIds = useNostrStore(
+    (state) => getReplyAndMentionIdsFromTextNotes(state.textNotes),
+    shallow
+  );
+
+  const rootTextNotes = useNostrStore((state) => {
+    const ids = getReplyAndMentionIdsFromTextNotes(state.textNotes);
+    const mappedIds = keyBy(ids, (id) => id);
+    return filter(textNotes, (textNote) => !mappedIds[textNote.id]);
+  }, shallow);
+
+  const replyAndMentionTextNotes = useNostrStore((state) => {
+    const ids = getReplyAndMentionIdsFromTextNotes(state.textNotes);
+    const mappedIds = keyBy(ids, (id) => id);
+    return filter(textNotes, (textNote) => !!mappedIds[textNote.id]);
+  }, shallow);
 
   const websockets = useRef<Record<string, WebSocket>>({});
 
@@ -63,6 +82,7 @@ export function useNostrClient(): NostrClient {
           authors: following,
         },
       ]);
+      console.log("subscribeToFollowingMetadata");
       websockets.current[relay].send(payload);
     },
     [following]
@@ -70,7 +90,7 @@ export function useNostrClient(): NostrClient {
 
   const subscribeToFollowingTextNotes = useCallback(
     (relay: string) => {
-      const since = Math.floor(Date.now() / 1000 - 86400); // Last 24 hours.
+      const since = Math.floor(Date.now() / 1000 - 86400 * 7); // Last 7 days.
       const payload = JSON.stringify([
         "REQ",
         "following-text-notes",
@@ -81,6 +101,7 @@ export function useNostrClient(): NostrClient {
           authors: following,
         },
       ]);
+      console.log("subscribeToFollowingTextNotes");
       websockets.current[relay].send(payload);
     },
     [following]
@@ -88,22 +109,20 @@ export function useNostrClient(): NostrClient {
 
   const subscribeToEventReplies = useCallback(
     (relay: string) => {
-      const since = Math.floor(Date.now() / 1000 - 86400); // Last 24 hours.
-      const ids = Object.values(textNotes).flatMap((textNote) =>
-        textNote.tags.filter((tag) => tag[0] === "e").map((tag) => tag[1])
-      );
+      const since = Math.floor(Date.now() / 1000 - 86400 * 7); // Last 7 days.
       const payload = JSON.stringify([
         "REQ",
         "event-replies",
         {
           since,
           until: Date.now() / 1000,
-          ids,
+          ids: replyAndMentionIds,
         },
       ]);
+      console.log("subscribeToEventReplies");
       websockets.current[relay].send(payload);
     },
-    [textNotes]
+    [replyAndMentionIds]
   );
 
   // Sync the relays to the websockets.
@@ -128,8 +147,11 @@ export function useNostrClient(): NostrClient {
         subscribeToFollowingTextNotes(relay);
         subscribeToEventReplies(relay);
       };
-      ws.onclose = () => {
-        console.info("onclose", relay);
+      ws.onclose = (ev) => {
+        console.info("onclose", relay, ev, ev.code);
+        if (ev.code === 4000) {
+          throw new Error("SHOULD NO USE!");
+        }
       };
       ws.onerror = (ev) => {
         console.info("onerror", relay, ev);
@@ -150,7 +172,32 @@ export function useNostrClient(): NostrClient {
   // Sync the textNotes to the the relay subscriptions for their reply events.
   useEffect(() => {
     Object.keys(websockets.current).forEach(subscribeToEventReplies);
-  }, [textNotes]);
+  }, [replyAndMentionIds]);
+
+  console.table({
+    // me: useHasChanged(me),
+    // relays: useHasChanged(relays),
+    // following: useHasChanged(following),
+    // users: useHasChanged(users),
+    // textNotes: useHasChanged(textNotes),
+    // rootTextNotes: useHasChanged(rootTextNotes),
+    replyAndMentionTextNotes: useHasChanged(
+      replyAndMentionTextNotes,
+      (prev, current) => {
+        // console.info("prev", JSON.stringify(prev));
+        // console.info("current", JSON.stringify(current));
+        console.info(
+          "diff1",
+          differenceBy(prev, current, (v) => v)
+        );
+        console.info(
+          "diff2",
+          differenceBy(current, prev, (v) => v)
+        );
+      }
+    ),
+    calendarEvents: useHasChanged(calendarEvents),
+  });
 
   return {
     me,
@@ -158,6 +205,8 @@ export function useNostrClient(): NostrClient {
     following,
     users,
     textNotes,
+    // rootTextNotes,
+    // replyAndMentionTextNotes,
     calendarEvents,
     // Actions.
     addRelay,
@@ -166,4 +215,23 @@ export function useNostrClient(): NostrClient {
     unfollow,
     sendEvent,
   };
+}
+
+function useHasChanged<T>(value: T, logFn?: (prev: T, current: T) => void) {
+  const prev = useRef(value);
+  const hasChanged = prev.current !== value;
+  prev.current = value;
+  if (hasChanged) {
+    logFn?.(prev.current, value);
+    // console.info("Befor", prev.current);
+    // console.info("After", value);
+    // if (value instanceof Array && prev.current instanceof Array) {
+    //   console.info("diff1", difference(value, prev.current));
+    //   console.info("diff2", difference(prev.current, value));
+    // } else {
+    //   console.info("Befor", prev.current);
+    //   console.info("After", value);
+    // }
+  }
+  return hasChanged;
 }
