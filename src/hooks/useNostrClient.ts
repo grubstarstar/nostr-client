@@ -1,4 +1,5 @@
 import {
+  Event,
   EventTemplate,
   Kind,
   UnsignedEvent,
@@ -10,6 +11,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { NostrStore, useNostrStore } from "./useNostrStore";
 import { getReplyAndMentionIdsFromTextNotes } from "../utils";
 import { shallow } from "zustand/shallow";
+import { ClientToRelayEventMessage, ClientToRelayMessage } from "../types";
 
 export type NostrClient = Omit<NostrStore, "onMessage"> & {
   sendEvent: <K extends Kind>(
@@ -63,8 +65,9 @@ export function useNostrClient(): NostrClient {
             ...eventTemplate,
             pubkey: getPublicKey(me.privkey),
           };
-          const event = finishEvent(unsignedEvent, me.privkey);
-          const payload = JSON.stringify(["EVENT", event]);
+          const event = finishEvent<K>(unsignedEvent, me.privkey);
+          const message: ClientToRelayEventMessage<Event<K>> = ["EVENT", event];
+          const payload = JSON.stringify(message);
           socket.send(payload);
         });
       }

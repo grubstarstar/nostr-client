@@ -3,22 +3,11 @@ import {
   generatePrivateKey,
   getPublicKey,
   validateEvent,
-  Event,
 } from "nostr-tools";
 import { uniq } from "lodash";
 import { create } from "zustand";
-
-interface UserMetadata {
-  pubkey: string;
-  name: string;
-  displayName: string;
-  username: string;
-  picture: string;
-  website: string;
-  updatedAt: number;
-}
-
-export interface TextNoteEvent extends Event {}
+import { TextNoteEvent, UserDetails } from "../types";
+import { extractRelayMessage, extractUserFromMetadata } from "../utils";
 
 export interface NostrStore {
   me?: {
@@ -26,7 +15,7 @@ export interface NostrStore {
     privkey: string;
   };
   relays: string[];
-  users: Record<string, UserMetadata>;
+  users: Record<string, UserDetails>;
   textNotes: Record<string, TextNoteEvent>;
   following: string[];
   calendarEvents: Record<string, any>;
@@ -82,8 +71,8 @@ export const useNostrStore = createNostrStore((set) => ({
   textNotes: {},
   calendarEvents: {},
   // Actions.
-  onMessage(message: MessageEvent<any>) {
-    const parsedMessage = JSON.parse(message.data);
+  onMessage(message: MessageEvent<string>) {
+    const parsedMessage = extractRelayMessage(message.data);
     const event = parsedMessage[2];
     if (parsedMessage[0] === "EVENT" && event && validateEvent(event)) {
       switch (event.kind) {
@@ -99,7 +88,7 @@ export const useNostrStore = createNostrStore((set) => ({
         case Kind.Metadata: {
           const createdAt = event.created_at;
           const pubKey = event.pubkey;
-          const setMetadata: UserMetadata = JSON.parse(event.content);
+          const setMetadata = extractUserFromMetadata(event);
           set((state) => {
             const user = state.users[pubKey];
             if (!user || user.updatedAt <= createdAt) {

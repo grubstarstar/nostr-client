@@ -1,51 +1,33 @@
+import { Event, Kind } from "nostr-tools";
+
+export type SetMetadataEvent = Event<Kind.Metadata>;
+export type TextNoteEvent = Event<Kind.Text>;
+export type RecommendRelayEvent = Event<Kind.RecommendRelay>;
+
 type SubscriptionId = string;
+type Messsage = string;
 
-type Event<TKind extends KindValues> = [
-  "EVENT",
-  SubscriptionId,
-  {
-    content: string;
-    created_at: number;
-    id: string;
-    kind: TKind;
-    pubkey: string;
-    sig: string;
-    tags: string[];
-  }
-];
+export type ClientToRelayEventMessage<TEvent extends Event> = ["EVENT", TEvent];
+export type ClientToRelaySubscribeMessage = ["REQ", SubscriptionId, Filters];
+export type ClientToRelayUnsubscribeMessage = ["CLOSE", SubscriptionId];
 
-type SetMetadataEvent = Event<0>;
-type TextNoteEvent = Event<1>;
-type RecommendServerEvent = Event<2>;
+export type ClientToRelayMessage =
+  | ClientToRelayEventMessage<
+      SetMetadataEvent | TextNoteEvent | RecommendRelayEvent
+    >
+  | ClientToRelaySubscribeMessage
+  | ClientToRelayUnsubscribeMessage;
 
-export const isSetMetadataEvent = (
-  serverMessage: ServerMessage
-): serverMessage is SetMetadataEvent =>
-  serverMessage[2]?.kind === kinds.set_metadata;
+export type RelayToClientMessage =
+  | [
+      "EVENT",
+      SubscriptionId,
+      SetMetadataEvent | TextNoteEvent | RecommendRelayEvent
+    ]
+  | ["EOSE", SubscriptionId]
+  | ["NOTICE", Messsage];
 
-export const isTextNoteEvent = (
-  serverMessage: ServerMessage
-): serverMessage is TextNoteEvent => {
-  return serverMessage[2]?.kind === kinds.text_note;
-};
-
-export const isRecommendServerEvent = (
-  serverMessage: ServerMessage
-): serverMessage is RecommendServerEvent =>
-  serverMessage[2]?.kind === kinds.recommend_server;
-
-type EOSE = ["EOSE", SubscriptionId];
-
-type Notice = ["NOTICE", string];
-
-export type ServerMessage =
-  | SetMetadataEvent
-  | TextNoteEvent
-  | RecommendServerEvent
-  | EOSE
-  | Notice;
-
-export interface User {
+export interface UserDetails {
   updatedAt: number;
   // from set meta data properties...
   website?: string;
@@ -70,13 +52,3 @@ export interface User {
   nip05_updated_at?: number;
   zapService?: string;
 }
-
-// type EOSE = ["EOSE", string];
-
-export const kinds = {
-  set_metadata: 0,
-  text_note: 1,
-  recommend_server: 2,
-} as const;
-type Kinds = typeof kinds;
-type KindValues = Kinds[keyof Kinds];
